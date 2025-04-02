@@ -11,7 +11,7 @@ import SwiftUI
 struct learnApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            JsonAPIView()
         }
     }
 }
