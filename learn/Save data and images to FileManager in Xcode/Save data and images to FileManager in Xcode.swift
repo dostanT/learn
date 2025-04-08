@@ -19,12 +19,66 @@ import SwiftUI
 
 class LocalFileManager{
     static let instance = LocalFileManager()
+    let folderName: String = "MyApp_Image"
     
-    func saveImage(image: UIImage, name: String){
+    init(){
+        createFolderIfNeeded()
+    }
+    
+    func createFolderIfNeeded(){
         guard
-            let data = image.jpegData(compressionQuality: 1.0) else {
-            print("ERROR getting data")
+            let path = FileManager
+                .default
+                .urls(for: .cachesDirectory, in: .userDomainMask)
+                .first?
+                .appendingPathComponent(folderName)
+                .path
+        else{
             return
+        }
+        
+        if !FileManager.default.fileExists(atPath: path){
+            do {
+                try FileManager.default.createDirectory(
+                    atPath: path,
+                    withIntermediateDirectories: true ,
+                    attributes: nil)
+                print("Succes creating folder")
+            } catch let error {
+                print("ERROR: \(error)")
+            }
+        }
+    }
+    
+    func deleteFolder(){
+        guard
+            let path = FileManager
+                .default
+                .urls(for: .cachesDirectory, in: .userDomainMask)
+                .first?
+                .appendingPathComponent(folderName)
+                .path
+        else{
+            return
+        }
+        
+        
+        do {
+            try FileManager.default.removeItem(atPath: path)
+            print("Succes deleting folder")
+            print(path)
+        } catch let error {
+            print("ERROR: \(error)")
+        }
+        
+    }
+    
+    func saveImage(image: UIImage, name: String) -> String{
+        guard
+            let data = image.jpegData(compressionQuality: 1.0),
+            let path = getPathForImage(name: name)
+        else {
+            return "ERROR getting data"
         }
         
         // these are most popular directory
@@ -34,24 +88,59 @@ class LocalFileManager{
 //        
 //        let path = directory2?.appendingPathComponent("\(name).jpg")
         
+        
+        
+        do {
+            try data.write(to: path)
+            print(path)
+            return "Success saving image"
+        } catch let error{
+            return "ERROR: \(error)"
+        }
+        // 26:30
+    }
+    
+    func getImage(name: String) -> UIImage?{
+        guard
+            let path = getPathForImage(name: name)?.path,
+            FileManager.default.fileExists(atPath: path)
+        else{
+            print("ERROR getting path")
+            return nil
+        }
+        return UIImage(contentsOfFile: path)
+    }
+    
+    func deleteImage(name: String) -> String{
+        guard
+            let path = getPathForImage(name: name)?.path,
+            FileManager.default.fileExists(atPath: path)
+        else{
+            return "ERROR getting data"
+        }
+        
+        do {
+            try FileManager.default.removeItem(atPath: path)
+            return "Success deleting image"
+
+        } catch let error{
+            return "Deleting error: \(error)"
+        }
+    }
+    
+    func getPathForImage(name: String) -> URL?{
         guard
             let path = FileManager
                 .default
                 .urls(for: .cachesDirectory, in: .userDomainMask)
                 .first?
+                .appendingPathComponent(folderName)
                 .appendingPathComponent("\(name).jpg")
         else {
             print("Error getting path")
-            return
+            return nil
         }
-        
-        do {
-            try data.write(to: path)
-            print("Success saving image")
-        } catch let error{
-            print("ERROR: \(error)")
-        }
-        // 26:30
+        return path
     }
 }
 
@@ -59,18 +148,28 @@ class SaveDataAndImagesToFileManagerViewModel: ObservableObject {
     @Published var image: UIImage? = nil
     let imageName: String = "girl"
     let manager = LocalFileManager.instance
+    @Published var infoMessage: String = ""
     
     init(){
-        getImageFromAssetsFolder( )
+        getImageFromFileManager( )
     }
     
     func getImageFromAssetsFolder(){
         image = UIImage(named: imageName)
     }
     
+    func getImageFromFileManager(){
+        image = manager.getImage(name: imageName)
+    }
+    
+    func deleteImageFromFileManager(){
+        infoMessage = manager.deleteImage(name: imageName)
+        manager.deleteFolder()
+    }
+    
     func saveImage(){
         guard let image = image else {return}
-        manager.saveImage(image: image, name: imageName)
+        infoMessage = manager.saveImage(image: image, name: imageName)
     }
 }
 
@@ -91,13 +190,37 @@ struct SaveDataAndImagesToFileManagerView: View {
                         .background(Color("AccentColor"))
                         .clipShape(RoundedRectangle(cornerRadius: 25))
                 }
-                Button{
-                    vm.saveImage()
-                }label:{
-                    Text("Save to File Manager")
+                HStack{
+                    Button{
+                        vm.saveImage()
+                    }label:{
+                        Text("Save to File Manager")
+                    }
+                    .frame(width: 150, height: 50)
+                    .foregroundStyle(.white)
+                    .background(Color("AccentColor"))
+                    .cornerRadius(10)
+                    
+                    Button{
+                        vm.deleteImageFromFileManager()
+                    }label:{
+                        VStack{
+                            Text("Delete")
+                            Text("from FileManager")
+                        }
+                       
+                    }
+                    .frame(width: 150, height: 50)
+                    .foregroundStyle(.white)
+                    .background(.red)
+                    .cornerRadius(10)
                 }
                 .padding()
-                .buttonStyle(.borderedProminent)
+                
+                Text(vm.infoMessage)
+                    .font(.largeTitle)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.purple)
                  
                 Spacer()
                 
@@ -117,6 +240,8 @@ struct SaveDataAndImagesToFileManagerView: View {
  the FileManager needs for store data in device. There are diferent path for diferent cases.
  
  FileManager are easyyyyy, i think.... There are quotes about this "Tell me the file, and I’ll save it, find it, move it, or delete it for you.".
+ 
+ FileManager store data on a device insted an application.
  
  I will use it absolutely
  
