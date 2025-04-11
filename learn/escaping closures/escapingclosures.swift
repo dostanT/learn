@@ -12,6 +12,12 @@ class esccloViewModel: ObservableObject {
         downloadData7 { [weak self] returnedResult in
             self?.text = returnedResult.data
         }
+        
+        downloadData7 { data in
+            self.text = data.data
+        }
+        
+        
     }
     
     func downloadData() -> String{
@@ -67,6 +73,10 @@ class esccloViewModel: ObservableObject {
             completionHandler(result)
         })
         
+    }
+    
+    deinit {
+           print("🧹 esccloViewModel удалён из памяти")
     }
         
 }
