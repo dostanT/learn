@@ -30,7 +30,7 @@ struct DownloadingImagesCacheView: View {
         NavigationStack{
             List{
                 ForEach(vm.dataArray) { model in
-                    Text("\(model.title)")
+                    DownloadingImagesRow(model: model)
                 }
             }
             .navigationTitle(Text("Downloading Images"))

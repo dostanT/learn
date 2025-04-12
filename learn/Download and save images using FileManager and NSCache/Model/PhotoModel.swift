@@ -2,7 +2,7 @@ import Foundation
 
 
 
-struct PhotoModel: Identifiable, Codable{
+struct PhotoModel: Identifiable, Codable {
     let albumId: Int
     let id: Int
     let title: String

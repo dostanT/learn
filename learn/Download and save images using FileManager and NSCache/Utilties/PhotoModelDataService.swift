@@ -3,18 +3,16 @@ import Combine
 
 class PhotoModelDataService {
     
-    static let instance = PhotoModelDataService()
+    static let instance = PhotoModelDataService() // Singleton
     
-    //их нужно передать ViewModel
     @Published var photoModels: [PhotoModel] = []
-    
-    var cancellables: Set<AnyCancellable> = []
+    var cancellables = Set<AnyCancellable>()
     
     private init() {
         downloadData()
     }
     
-    func downloadData(){
+    func downloadData() {
         guard let url = URL(string: "https://jsonplaceholder.typicode.com/photos") else { return }
         
         URLSession.shared.dataTaskPublisher(for: url)
@@ -22,21 +20,20 @@ class PhotoModelDataService {
             .receive(on: DispatchQueue.main)
             .tryMap(handleOutput)
             .decode(type: [PhotoModel].self, decoder: JSONDecoder())
-            .sink { (complition) in
-                switch complition{
+            .sink { (completion) in
+                switch completion {
                 case .finished:
                     break
                 case .failure(let error):
-                    print("ERROR downloading data: \(error)")
-                    break
+                    print("Error downloading data. \(error)")
                 }
-            } receiveValue: { [weak self] returnedPhotoModels in
+            } receiveValue: { [weak self] (returnedPhotoModels) in
                 self?.photoModels = returnedPhotoModels
             }
             .store(in: &cancellables)
     }
     
-    private func handleOutput(output: URLSession.DataTaskPublisher.Output) throws -> Data{
+    private func handleOutput(output: URLSession.DataTaskPublisher.Output) throws -> Data {
         guard
             let response = output.response as? HTTPURLResponse,
             response.statusCode >= 200 && response.statusCode < 300 else {
@@ -44,4 +41,5 @@ class PhotoModelDataService {
         }
         return output.data
     }
+    
 }
