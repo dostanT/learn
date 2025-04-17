@@ -6,12 +6,12 @@
 //
 
 import SwiftUI
+// accessibility Routers когда я свайпую в параво то оно по очердно листает вверх, аналогично в лево в низ. Если я на хединге свайпаю снизу в верх то он переносит на следуещий хединг, что бы облегчить для слепых пользование.
 
 struct Accessibility_in_Swift_Voice_Over: View {
     
     @State private var isActive: Bool = false
     @State private var isFavorite: Bool = true
-    
     var body: some View {
         NavigationStack{
             Form {
@@ -48,14 +48,18 @@ struct Accessibility_in_Swift_Voice_Over: View {
                     } label: {
                         Text("Favorites")
                     }
+                    .accessibilityRemoveTraits(.isButton) //уберает озвучивание кнопки
                     
                     Button{
                         isFavorite.toggle()
                     } label: {
+                        // тут будет говорить не Favorites а Heart а нам нужно favorite
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                     }
+                    .accessibilityLabel("Favorites")// теперь будет говорить favorites
                     
                     Text("Favotites")
+                        .accessibilityAddTraits(.isButton )
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(.black.opacity(0.00000001))
                         .onTapGesture{
@@ -67,10 +71,12 @@ struct Accessibility_in_Swift_Voice_Over: View {
                 }
                 
                 VStack{
+                    //content тут не хеддинг и при свайпе по хедингам оно не будет реаировать
                     Text("CONTENT")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .foregroundStyle(.secondary)
                         .font(.caption)
+                        .accessibilityAddTraits(.isHeader) // now it is heading
                     
                     ScrollView(.horizontal, showsIndicators: false){
                         HStack(spacing: 8) {
@@ -83,7 +89,15 @@ struct Accessibility_in_Swift_Voice_Over: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                     Text("Item \(x)")
                                 }
+                                .onTapGesture {
+                                    
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityLabel("Item number \(x). Image of Beauty girl")
+                                .accessibilityHint("Tap to see more details")
                             }
+                            
                         }
                     }
                 }
